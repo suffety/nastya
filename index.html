@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Альфа-календарь</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      background: #f3f4f6;
+      display: flex;
+      justify-content: center;
+      padding: 12px;
+      color: #111827;
+    }
+
+    .app {
+      background: #ffffff;
+      width: 100%;
+      max-width: 430px;
+      border-radius: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      padding: 14px 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Header */
+    .app-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 2px 8px;
+    }
+
+    .logo-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      background: #ef3124;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #ffffff;
+      font-size: 18px;
+    }
+
+    .header-text {
+      flex: 1;
+    }
+
+    .app-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .app-subtitle {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+
+    .header-icon {
+      border: none;
+      background: #f3f4f6;
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: #4b5563;
+      cursor: pointer;
+    }
+
+    /* Filter bar */
+    .filter-bar {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .filter-chip {
+      flex-shrink: 0;
+      border-radius: 999px;
+      border: 1px solid #e5e7eb;
+      padding: 6px 10px;
+      font-size: 11px;
+      color: #4b5563;
+      background: #ffffff;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+
+    .filter-chip.active {
+      background: #ef3124;
+      border-color: #ef3124;
+      color: #ffffff;
+      box-shadow: 0 6px 14px rgba(239, 49, 36, 0.35);
+    }
+
+    /* Calendar card */
+    .calendar-card {
+      border-radius: 18px;
+      background: #f9fafb;
+      padding: 10px 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .month-label {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .month-subtitle {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 2px;
+    }
+
+    .month-nav {
+      display: flex;
+      gap: 4px;
+    }
+
+    .nav-btn {
+      border: none;
+      background: #ffffff;
+      border-radius: 999px;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+      color: #374151;
+    }
+
+    .weekday-row {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      font-size: 10px;
+      color: #9ca3af;
+      margin-bottom: 2px;
+      text-transform: uppercase;
+    }
+
+    .weekday {
+      text-align: center;
+      padding: 2px 0;
+    }
+
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .day-cell {
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
+      color: #111827;
+    }
+
+    .day-cell.empty {
+      cursor: default;
+      background: transparent;
+    }
+
+    .day-cell:hover:not(.empty) {
+      background: #e5e7eb;
+      transform: translateY(-1px);
+    }
+
+    .day-cell.today {
+      border: 1px solid #ef3124;
+      color: #ef3124;
+      font-weight: 600;
+    }
+
+    .day-cell.selected {
+      background: #ef3124;
+      color: #ffffff;
+      font-weight: 600;
+      box-shadow: 0 6px 14px rgba(239, 49, 36, 0.35);
+    }
+
+    .day-dot {
+      position: absolute;
+      bottom: 4px;
+      width: 4px;
+      height: 4px;
+      border-radius: 999px;
+      background: #10b981;
+    }
+
+    /* Events */
+    .event-card {
+      margin-top: 2px;
+      border-radius: 18px;
+      background: #fff;
+      padding: 10px 10px 6px;
+      border: 1px solid #f3f4f6;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .event-list-header {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .event-list-header span {
+      font-size: 11px;
+      font-weight: 400;
+      color: #9ca3af;
+      margin-left: 4px;
+    }
+
+    .event-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 150px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    .event-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .event-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #ffffff;
+      flex-shrink: 0;
+    }
+
+    .event-icon.payment {
+      background: #ef3124;
+    }
+
+    .event-icon.event {
+      background: #2563eb;
+    }
+
+    .event-icon.trip {
+      background: #059669;
+    }
+
+    .event-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .event-title {
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .event-subtitle {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
+    .event-amount {
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .event-amount.negative {
+      color: #ef3124;
+    }
+
+    .event-amount.positive {
+      color: #059669;
+    }
+
+    .event-empty {
+      font-size: 11px;
+      color: #9ca3af;
+      padding: 2px 0 4px;
+    }
+
+    /* Scrollbar for events */
+    .event-list::-webkit-scrollbar {
+      width: 4px;
+    }
+    .event-list::-webkit-scrollbar-thumb {
+      background: #e5e7eb;
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="logo-circle">A</div>
+      <div class="header-text">
+        <div class="app-title">Альфа-календарь</div>
+        <div class="app-subtitle">Платежи, события, поездки</div>
+      </div>
+      <button class="header-icon">☰</button>
+    </header>
+
+    <!-- Фильтры -->
+    <div class="filter-bar">
+      <button class="filter-chip active" data-filter="all">Все</button>
+      <button class="filter-chip" data-filter="payment">Платежи</button>
+      <button class="filter-chip" data-filter="event">События</button>
+      <button class="filter-chip" data-filter="trip">Путешествия</button>
+    </div>
+
+    <!-- Календарь -->
+    <section class="calendar-card">
+      <div class="calendar-header">
+        <div>
+          <div class="month-label" id="monthLabel"></div>
+          <div class="month-subtitle" id="monthSubtitle"></div>
+        </div>
+        <div class="month-nav">
+          <button class="nav-btn" id="prevMonth">&lt;</button>
+          <button class="nav-btn" id="nextMonth">&gt;</button>
+        </div>
+      </div>
+
+      <div class="weekday-row">
+        <div class="weekday">ПН</div>
+        <div class="weekday">ВТ</div>
+        <div class="weekday">СР</div>
+        <div class="weekday">ЧТ</div>
+        <div class="weekday">ПТ</div>
+        <div class="weekday">СБ</div>
+        <div class="weekday">ВС</div>
+      </div>
+
+      <div class="days-grid" id="daysGrid"></div>
+    </section>
+
+    <!-- Список событий -->
+    <section class="event-card">
+      <div class="event-list-header" id="eventHeader">
+        Сегодня
+        <span id="eventHeaderDate"></span>
+      </div>
+      <ul class="event-list" id="eventList"></ul>
+    </section>
+  </div>
+
+  <script>
+    // ===== ДАННЫЕ =====
+    const monthNames = [
+      "Январь",
+      "Февраль",
+      "Март",
+      "Апрель",
+      "Май",
+      "Июнь",
+      "Июль",
+      "Август",
+      "Сентябрь",
+      "Октябрь",
+      "Ноябрь",
+      "Декабрь"
+    ];
+
+    const monthNamesGenitive = [
+      "января",
+      "февраля",
+      "марта",
+      "апреля",
+      "мая",
+      "июня",
+      "июля",
+      "августа",
+      "сентября",
+      "октября",
+      "ноября",
+      "декабря"
+    ];
+
+    const today = new Date();
+    let currentYear = today.getFullYear();
+    let currentMonth = today.getMonth();
+    let selectedDate = new Date(today);
+
+    // Фильтр (all | payment | event | trip)
+    let activeFilter = "all";
+
+    // Пример событий (можно заменить на реальные данные)
+    const events = [
+      {
+        date: "2025-11-27",
+        type: "payment",
+        title: "Платеж по кредиту",
+        subtitle: "Кредиты и кредитные карты",
+        amount: "-12 500 ₽"
+      },
+      {
+        date: "2025-11-27",
+        type: "event",
+        title: "Концерт",
+        subtitle: "Билеты из Альфа-Афиши",
+        amount: "-3 200 ₽"
+      },
+      {
+        date: "2025-11-27",
+        type: "trip",
+        title: "Перелёт в Сочи",
+        subtitle: "Альфа-Тревел",
+        amount: "-18 000 ₽"
+      },
+      {
+        date: "2025-11-28",
+        type: "payment",
+        title: "Коммунальные услуги",
+        subtitle: "Автоплатеж",
+        amount: "-4 800 ₽"
+      },
+      {
+        date: "2025-11-30",
+        type: "payment",
+        title: "ИПОТЕКА",
+        subtitle: "Ежемесячный платёж",
+        amount: "-45 000 ₽"
+      },
+      {
+        date: "2025-12-01",
+        type: "payment",
+        title: "Зарплата",
+        subtitle: "Работа",
+        amount: "+145 000 ₽"
+      },
+      {
+        date: "2025-12-01",
+        type: "event",
+        title: "День рождения друга",
+        subtitle: "Подарок, ресторан",
+        amount: "-8 000 ₽"
+      }
+    ];
+
+    // ===== УТИЛИТЫ =====
+    function pad(num) {
+      return num < 10 ? "0" + num : String(num);
+    }
+
+    function toISODate(date) {
+      return (
+        date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate())
+      );
+    }
+
+    function formatHumanDate(date) {
+      const day = date.getDate();
+      const month = monthNamesGenitive[date.getMonth()];
+      return day + " " + month;
+    }
+
+    function isSameDate(a, b) {
+      return (
+        a.getFullYear() === b.getFullYear() &&
+        a.getMonth() === b.getMonth() &&
+        a.getDate() === b.getDate()
+      );
+    }
+
+    // ===== РЕНДЕР КАЛЕНДАРЯ =====
+    const monthLabel = document.getElementById("monthLabel");
+    const monthSubtitle = document.getElementById("monthSubtitle");
+    const daysGrid = document.getElementById("daysGrid");
+    const prevMonthBtn = document.getElementById("prevMonth");
+    const nextMonthBtn = document.getElementById("nextMonth");
+
+    function renderCalendar() {
+      const firstDay = new Date(currentYear, currentMonth, 1);
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+      // JS Sunday=0, Monday=1... => сдвигаем на ПН=0
+      let startDay = firstDay.getDay() - 1;
+      if (startDay < 0) startDay = 6; // если воскресенье
+
+      monthLabel.textContent = monthNames[currentMonth] + " " + currentYear;
+      monthSubtitle.textContent = "Платежи и события за месяц";
+
+      daysGrid.innerHTML = "";
+
+      // Пустые ячейки до 1-го числа
+      for (let i = 0; i < startDay; i++) {
+        const emptyCell = document.createElement("div");
+        emptyCell.className = "day-cell empty";
+        daysGrid.appendChild(emptyCell);
+      }
+
+      // Ячейки с датами
+      for (let day = 1; day <= daysInMonth; day++) {
+        const cellDate = new Date(currentYear, currentMonth, day);
+        const cell = document.createElement("div");
+        cell.className = "day-cell";
+        cell.textContent = day;
+        cell.dataset.date = toISODate(cellDate);
+
+        // today
+        if (isSameDate(cellDate, today)) {
+          cell.classList.add("today");
+        }
+
+        // selected
+        if (isSameDate(cellDate, selectedDate)) {
+          cell.classList.add("selected");
+        }
+
+        // точка, если есть события в этот день
+        const hasEvents = events.some((e) => e.date === toISODate(cellDate));
+        if (hasEvents) {
+          const dot = document.createElement("div");
+          dot.className = "day-dot";
+          cell.appendChild(dot);
+        }
+
+        cell.addEventListener("click", () => {
+          selectedDate = cellDate;
+          renderCalendar();
+          renderEvents();
+        });
+
+        daysGrid.appendChild(cell);
+      }
+    }
+
+    prevMonthBtn.addEventListener("click", () => {
+      currentMonth--;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      renderCalendar();
+      renderEvents();
+    });
+
+    nextMonthBtn.addEventListener("click", () => {
+      currentMonth++;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+      renderCalendar();
+      renderEvents();
+    });
+
+    // ===== РЕНДЕР СОБЫТИЙ =====
+    const eventHeader = document.getElementById("eventHeader");
+    const eventHeaderDate = document.getElementById("eventHeaderDate");
+    const eventList = document.getElementById("eventList");
+
+    function renderEvents() {
+      eventList.innerHTML = "";
+
+      const iso = toISODate(selectedDate);
+      const filtered = events.filter((e) => {
+        if (e.date !== iso) return false;
+        if (activeFilter === "all") return true;
+        return e.type === activeFilter;
+      });
+
+      // Заголовок
+      const isToday = isSameDate(selectedDate, today);
+      eventHeader.textContent = isToday ? "Сегодня" : "Выбранный день";
+      const span = document.createElement("span");
+      span.id = "eventHeaderDate";
+      span.textContent = " · " + formatHumanDate(selectedDate);
+      eventHeader.appendChild(span);
+
+      if (filtered.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "event-empty";
+        empty.textContent =
+          "Нет событий в этот день. Вы можете добавить платеж или поездку в приложении.";
+        eventList.appendChild(empty);
+        return;
+      }
+
+      filtered.forEach((e) => {
+        const li = document.createElement("li");
+        li.className = "event-item";
+
+        const icon = document.createElement("div");
+        icon.className = "event-icon";
+        let iconSymbol = "";
+
+        if (e.type === "payment") {
+          icon.classList.add("payment");
+          iconSymbol = "₽";
+        } else if (e.type === "event") {
+          icon.classList.add("event");
+          iconSymbol = "★";
+        } else if (e.type === "trip") {
+          icon.classList.add("trip");
+          iconSymbol = "✈";
+        }
+
+        icon.textContent = iconSymbol;
+
+        const main = document.createElement("div");
+        main.className = "event-main";
+
+        const title = document.createElement("div");
+        title.className = "event-title";
+        title.textContent = e.title;
+
+        const subtitle = document.createElement("div");
+        subtitle.className = "event-subtitle";
+        subtitle.textContent = e.subtitle;
+
+        main.appendChild(title);
+        main.appendChild(subtitle);
+
+        const amount = document.createElement("div");
+        amount.className = "event-amount";
+        if (e.amount.startsWith("-")) {
+          amount.classList.add("negative");
+        } else if (e.amount.startsWith("+")) {
+          amount.classList.add("positive");
+        }
+        amount.textContent = e.amount;
+
+        li.appendChild(icon);
+        li.appendChild(main);
+        li.appendChild(amount);
+
+        eventList.appendChild(li);
+      });
+    }
+
+    // ===== ФИЛЬТРЫ =====
+    const filterChips = document.querySelectorAll(".filter-chip");
+    filterChips.forEach((chip) => {
+      chip.addEventListener("click", () => {
+        filterChips.forEach((c) => c.classList.remove("active"));
+        chip.classList.add("active");
+        activeFilter = chip.dataset.filter;
+        renderEvents();
+      });
+    });
+
+    // ===== ИНИЦИАЛИЗАЦИЯ =====
+    renderCalendar();
+    renderEvents();
+  </script>
+</body>
+</html>
